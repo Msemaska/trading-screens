@@ -1,0 +1,38 @@
+{
+  "name": "trading-screens",
+  "version": "1.0.0",
+  "description": "Market Dashboard for tracking multiple financial charts",
+  "main": "src/main.js",
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "start": "npm run build && electron .",
+    "dev": "electron ."
+  },
+  "keywords": [
+    "electron",
+    "trading",
+    "dashboard",
+    "finance"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^35.1.5",
+    "electron-reload": "^2.0.0-alpha.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/electron": "^1.4.38",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.2",
+    "css-loader": "^7.1.2",
+    "electron-builder": "^26.0.12",
+    "html-webpack-plugin": "^5.6.3",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
+    "webpack": "^5.99.5",
+    "webpack-cli": "^6.0.1"
+  }
+}

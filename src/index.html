@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Dashboard</title>
+  <style>
+    /* Global styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      overflow: hidden;
+      height: 100vh;
+    }
+    
+    /* App layout */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+    
+    /* Toolbar styles */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background-color: #2c3e50;
+      color: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .toolbar-section {
+      display: flex;
+      align-items: center;
+    }
+    
+    .toolbar h1 {
+      font-size: 20px;
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    .tabs {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .tab-button {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .tab-button.active {
+      background-color: rgba(255, 255, 255, 0.2);
+      font-weight: 500;
+    }
+    
+    .tab-button:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .action-button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+    
+    /* Main content styles */
+    main {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: calc(100vh - 44px); /* Subtract toolbar height */
+    }
+    
+    /* Grid styles */
+    .tab-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 100%; /* Ensure full height */
+    }
+    
+    /* Grid container to hold all rows */
+    .grid-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+    
+    .grid-row {
+      display: flex;
+      margin-bottom: 10px;
+      min-height: 0; /* Important for Firefox */
+      /* Height will be set inline */
+    }
+    
+    .grid-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .grid-cell {
+      flex: 1;
+      margin-right: 10px;
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100%; /* Fill the entire row height */
+    }
+    
+    .grid-cell:last-child {
+      margin-right: 0;
+    }
+    
+    /* Drag and drop styles */
+    .grid-cell.drag-over {
+      background-color: #e0f7fa;
+      box-shadow: 0 0 10px rgba(0, 149, 255, 0.5);
+      border: 2px dashed #03a9f4;
+    }
+    
+    .chart-panel.dragging {
+      opacity: 0.5;
+      border: 2px dashed #03a9f4;
+    }
+    
+    /* Chart panel styles */
+    .chart-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      cursor: move; /* Indicate draggable */
+      user-select: none; /* Prevent text selection during drag */
+    }
+    
+    /* Dragging styles */
+    .chart-panel.dragging {
+      opacity: 0.5;
+      border: 2px dashed #2c3e50;
+    }
+    
+    /* Drag over styles */
+    .grid-cell.drag-over {
+      background-color: rgba(44, 62, 80, 0.1);
+      border: 2px dashed #2c3e50;
+    }
+    
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background-color: #ecf0f1;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .chart-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    
+    .chart-controls {
+      display: flex;
+      gap: 5px;
+    }
+    
+    .chart-controls button {
+      padding: 5px 10px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    
+    .chart-controls button:hover {
+      background-color: #2980b9;
+    }
+    
+    .chart-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      background-color: #f9f9f9;
+    }
+    
+    .chart-placeholder {
+      color: #95a5a6;
+      text-align: center;
+    }
+    
+    /* Empty cell styles */
+    .empty-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #95a5a6;
+      font-style: italic;
+    }
+    
+    /* Empty state styles */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      color: #7f8c8d;
+    }
+    
+    .empty-state h2 {
+      margin-bottom: 10px;
+      font-size: 1.5rem;
+    }
+    
+    /* Dialog styles */
+    .dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .dialog {
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      width: 400px;
+      max-width: 90%;
+      padding: 20px;
+    }
+    
+    .dialog h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      font-size: 1rem;
+    }
+    
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .form-actions button {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    
+    .btn-cancel {
+      background-color: #e74c3c;
+      color: white;
+    }
+    
+    .btn-save {
+      background-color: #2ecc71;
+      color: white;
+    }
+    
+    /* Footer styles */
+    footer {
+      background-color: #2c3e50;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+    
+    /* Toolbar styles */
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+    
+    .toolbar button {
+      padding: 8px 15px;
+      background-color: #2ecc71;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .toolbar button:hover {
+      background-color: #27ae60;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="toolbar">
+      <div class="toolbar-section">
+        <h1>Market Dashboard</h1>
+      </div>
+      
+      <div class="toolbar-section tabs">
+        <button class="tab-button active" data-tab="main">Main Dashboard</button>
+        <button class="tab-button" data-tab="secondary">Secondary Dashboard</button>
+        <button class="tab-button" data-tab="crypto">Crypto</button>
+      </div>
+      
+      <div class="toolbar-section actions">
+        <button class="action-button" id="refresh-charts-btn">↻ Refresh Charts</button>
+        <button class="action-button" id="add-chart-btn">Add Chart</button>
+        <button class="action-button" id="new-window-btn">New Window</button>
+      </div>
+    </div>
+    
+    <div class="dashboard">
+      <div id="main-tab" class="grid-container">
+        <!-- Grid will be generated dynamically -->
+      </div>
+      
+      <div id="secondary-tab" class="grid-container" style="display: none;">
+        <!-- Grid will be generated dynamically -->
+      </div>
+      
+      <div id="crypto-tab" class="grid-container" style="display: none;">
+        <!-- Grid will be generated dynamically -->
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Chart Dialog (hidden by default) -->
+  <div id="add-chart-dialog" class="dialog-overlay" style="display: none;">
+    <div class="dialog">
+      <h2>Add New Chart</h2>
+      <form id="add-chart-form">
+        <div class="form-group">
+          <label for="asset-name">Asset Name:</label>
+          <input id="asset-name" type="text" placeholder="e.g., Tesla" required>
+        </div>
+        
+        <!-- Asset Symbol field removed as requested -->
+        
+        <div class="form-group">
+          <label for="asset-url">Custom URL (optional):</label>
+          <input id="asset-url" type="text" placeholder="e.g., https://finance.yahoo.com/quote/TSLA">
+          <small>Leave empty to use Google Finance</small>
+        </div>
+        
+        <div class="dialog-buttons">
+          <button type="button" id="cancel-add-chart">Cancel</button>
+          <button type="submit">Add Chart</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Edit Chart Dialog (hidden by default) -->
+  <div id="edit-chart-dialog" class="dialog-overlay" style="display: none;">
+    <div class="dialog">
+      <h2>Edit Chart</h2>
+      <form id="edit-chart-form">
+        <input type="hidden" id="edit-chart-index">
+        <div class="form-group">
+          <label for="edit-asset-name">Asset Name:</label>
+          <input id="edit-asset-name" type="text" required>
+        </div>
+        
+        <!-- Asset Symbol field removed as requested -->
+        
+        <div class="form-group">
+          <label for="edit-asset-url">Custom URL (optional):</label>
+          <input id="edit-asset-url" type="text">
+          <small>Leave empty to use Google Finance</small>
+        </div>
+        
+        <div class="dialog-buttons">
+          <button type="button" id="cancel-edit-chart">Cancel</button>
+          <button type="submit">Update Chart</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // Import required Electron modules
+    const { ipcRenderer } = require('electron');
+    
+    // Constants
+    const MAIN_TAB = 'main';
+    const SECONDARY_TAB = 'secondary';
+    const CRYPTO_TAB = 'crypto';
+    const GRID_ROWS = 2;
+    const GRID_COLS = 4;
+    
+    // State
+    let config = {
+      layouts: { 'Default Layout': [] },
+      current_layout: 'Default Layout',
+      tab_layouts: {
+        [MAIN_TAB]: [],
+        [SECONDARY_TAB]: [],
+        [CRYPTO_TAB]: []
+      }
+    };
+    let currentTab = MAIN_TAB;
+    let chartViewsCreated = false;
+    let windowSize = { width: 0, height: 0 };
+    
+    // DOM Elements
+    const mainTabContainer = document.getElementById('main-tab');
+    const secondaryTabContainer = document.getElementById('secondary-tab');
+    const cryptoTabContainer = document.getElementById('crypto-tab');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const refreshChartsBtn = document.getElementById('refresh-charts-btn');
+    const addChartBtn = document.getElementById('add-chart-btn');
+    const newWindowBtn = document.getElementById('new-window-btn');
+    const addChartDialog = document.getElementById('add-chart-dialog');
+    const addChartForm = document.getElementById('add-chart-form');
+    const cancelAddChart = document.getElementById('cancel-add-chart');
+    const editChartDialog = document.getElementById('edit-chart-dialog');
+    const editChartForm = document.getElementById('edit-chart-form');
+    const cancelEditChart = document.getElementById('cancel-edit-chart');
+    
+    // Initialize the application
+    async function init() {
+      console.log('Initializing application...');
+      
+      // Get window size for BrowserView calculations
+      updateWindowSize();
+      
+      // Load configuration
+      try {
+        config = await ipcRenderer.invoke('load-config');
+        console.log('Configuration loaded:', config);
+        
+        // Ensure tab_layouts exists
+        if (!config.tab_layouts) {
+          config.tab_layouts = {
+            [MAIN_TAB]: [],
+            [SECONDARY_TAB]: [],
+            [CRYPTO_TAB]: []
+          };
+        }
+        
+        // Make sure all tabs exist in the configuration
+        if (!config.tab_layouts[MAIN_TAB]) config.tab_layouts[MAIN_TAB] = [];
+        if (!config.tab_layouts[SECONDARY_TAB]) config.tab_layouts[SECONDARY_TAB] = [];
+        if (!config.tab_layouts[CRYPTO_TAB]) config.tab_layouts[CRYPTO_TAB] = [];
+        
+        // Render the initial grid
+        renderGrid();
+        
+        // Create BrowserViews for the initial tab
+        createChartViews();
+        
+        // Set up event listeners
+        setupEventListeners();
+        
+        // Set up drag and drop listeners
+        setupDragAndDropListeners();
+        
+        // Set up window resize listener
+        window.addEventListener('resize', handleWindowResize);
+        
+      } catch (error) {
+        console.error('Error loading configuration:', error);
+      }
+    }
+    
+    // Update window size for BrowserView calculations
+    function updateWindowSize() {
+      windowSize = {
+        width: window.innerWidth,
+        height: window.innerHeight
+      };
+      console.log(`Window size updated: ${windowSize.width}x${windowSize.height}`);
+    }
+    
+    // Refresh all charts in the current tab
+    async function refreshCharts() {
+      try {
+        console.log(`Refreshing all charts in ${currentTab} tab`);
+        
+        // Simply recreate all chart views for the current tab
+        // This will remove existing views and create new ones with fresh URLs
+        await createChartViews();
+        
+        console.log('All charts refreshed successfully');
+      } catch (error) {
+        console.error('Error refreshing charts:', error);
+      }
+    }
+    
+    // Refresh a single chart
+    async function refreshSingleChart(index) {
+      try {
+        console.log(`Refreshing chart at index ${index}`);
+        
+        // Get charts for the current tab
+        const charts = config.tab_layouts[currentTab] || [];
+        
+        // Find the chart by index
+        if (index >= 0 && index < charts.length) {
+          const chart = charts[index];
+          const { row, col, name, symbol, url } = chart;
+          
+          // Create a unique ID for this chart view
+          const id = `${currentTab}-${row}-${col}`;
+          
+          // Get the chart URL
+          const chartUrl = url || (symbol ? `https://www.google.com/finance/quote/${symbol}` : 'about:blank');
+          
+          // Add timestamp to force refresh (bypass cache)
+          const timestamp = Date.now();
+          const refreshedUrl = chartUrl.includes('?') 
+            ? `${chartUrl}&_t=${timestamp}` 
+            : `${chartUrl}?_t=${timestamp}`;
+          
+          // Remove the existing view
+          try {
+            await ipcRenderer.invoke('remove-chart-view', { id });
+            console.log(`Removed chart view ${id} for refresh`);
+          } catch (e) {
+            console.log(`Error removing chart view ${id}: ${e.message}`);
+          }
+          
+          // Short delay to ensure view is removed
+          await new Promise(resolve => setTimeout(resolve, 50));
+          
+          // Calculate bounds for this chart
+          const bounds = calculateChartBounds(row, col);
+          
+          // Create a new BrowserView with the refreshed URL
+          const result = await ipcRenderer.invoke('create-chart-view', {
+            id,
+            url: refreshedUrl,
+            bounds
+          });
+          
+          if (result.success) {
+            console.log(`Chart ${name} refreshed successfully`);
+          } else {
+            console.error(`Failed to refresh chart ${name}: ${result.error}`);
+          }
+        } else {
+          console.error(`Chart not found at index ${index}`);
+        }
+      } catch (error) {
+        console.error('Error refreshing chart:', error);
+      }
+    }
+    
+    // Set up event listeners
+    function setupEventListeners() {
+      console.log('Setting up event listeners...');
+      
+      // Tab buttons
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const tab = button.dataset.tab;
+          switchTab(tab);
+        });
+      });
+      
+      // Add chart button
+      addChartBtn.addEventListener('click', async () => {
+        // Hide all BrowserViews when showing dialog
+        await ipcRenderer.invoke('hide-all-chart-views');
+        addChartDialog.style.display = 'flex';
+      });
+      
+      // Cancel add chart
+      cancelAddChart.addEventListener('click', async () => {
+        addChartDialog.style.display = 'none';
+        addChartForm.reset();
+        // Show all BrowserViews when hiding dialog
+        await ipcRenderer.invoke('show-all-chart-views');
+      });
+      
+      // Add chart form submission
+      addChartForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        addChart();
+        // Note: BrowserViews will be shown in addChart() function
+      });
+      
+      // Cancel edit chart
+      cancelEditChart.addEventListener('click', async () => {
+        editChartDialog.style.display = 'none';
+        editChartForm.reset();
+        // Show all BrowserViews when hiding dialog
+        await ipcRenderer.invoke('show-all-chart-views');
+      });
+      
+      // Edit chart form submission
+      editChartForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        updateChart();
+      });
+      
+      // New window button
+      newWindowBtn.addEventListener('click', () => {
+        ipcRenderer.invoke('create-new-window');
+      });
+      
+      // Refresh charts button
+      refreshChartsBtn.addEventListener('click', async () => {
+        console.log('Refreshing all charts in current tab');
+        await refreshCharts();
+      });
+      
+      console.log('All event listeners set up successfully');
+    }
+    
+    // Set up drag and drop event listeners
+    function setupDragAndDropListeners() {
+      console.log('Setting up drag and drop listeners...');
+      
+      // Remove existing listeners first to avoid duplicates
+      document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('dragenter', handleDragEnter);
+      document.removeEventListener('dragleave', handleDragLeave);
+      document.removeEventListener('drop', handleDrop);
+      document.removeEventListener('dragend', handleDragEnd);
+      
+      // Add event delegation for drag and drop events on the document level
+      document.addEventListener('dragstart', handleDragStart);
+      document.addEventListener('dragover', handleDragOver);
+      document.addEventListener('dragenter', handleDragEnter);
+      document.addEventListener('dragleave', handleDragLeave);
+      document.addEventListener('drop', handleDrop);
+      document.addEventListener('dragend', handleDragEnd);
+      
+      // Also add direct listeners to all chart panels
+      const chartPanels = document.querySelectorAll('.chart-panel');
+      chartPanels.forEach((panel) => {
+        panel.setAttribute('draggable', 'true');
+        console.log('Setting draggable on panel:', panel.dataset.index);
+      });
+      
+      console.log('Drag and drop listeners set up successfully');
+    }
+    
+    // Handle drag start
+    function handleDragStart(e) {
+      try {
+        // Only handle chart panels
+        const chartPanel = e.target.closest('.chart-panel');
+        if (!chartPanel) {
+          console.log('Drag started on non-chart panel element:', e.target.tagName);
+          return;
+        }
+        
+        console.log('Drag started for chart panel:', chartPanel.dataset.index);
+        console.log('Drag event target:', e.target.tagName, e.target.className);
+        
+        // Store the dragged chart
+        draggedChart = chartPanel;
+        dragSourceCell = chartPanel.closest('.grid-cell');
+        
+        // Set data transfer
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', chartPanel.dataset.index);
+        
+        // Add dragging class after a short delay to avoid flickering
+        setTimeout(() => {
+          chartPanel.classList.add('dragging');
+        }, 0);
+      } catch (error) {
+        console.error('Error in handleDragStart:', error);
+      }
+    }
+    
+    // Handle drag over
+    function handleDragOver(e) {
+      try {
+        // Prevent default to allow drop
+        e.preventDefault();
+        
+        // Only handle grid cells
+        const targetCell = e.target.closest('.grid-cell');
+        if (!targetCell) {
+          return false;
+        }
+        
+        // Set the dropEffect to move
+        e.dataTransfer.dropEffect = 'move';
+        
+        return false;
+      } catch (error) {
+        console.error('Error in handleDragOver:', error);
+        return false;
+      }
+    }
+    
+    // Handle drag enter
+    function handleDragEnter(e) {
+      try {
+        // Only handle grid cells
+        const cell = e.target.closest('.grid-cell');
+        if (!cell || cell === dragSourceCell) return;
+        
+        console.log('Drag entered cell:', cell.dataset.row, cell.dataset.col);
+        
+        // Add drag-over class
+        cell.classList.add('drag-over');
+      } catch (error) {
+        console.error('Error in handleDragEnter:', error);
+      }
+    }
+    
+    // Handle drag leave
+    function handleDragLeave(e) {
+      // Only handle grid cells
+      const cell = e.target.closest('.grid-cell');
+      if (!cell) return;
+      
+      // Remove drag-over class
+      cell.classList.remove('drag-over');
+    }
+    
+    // Handle drop
+    function handleDrop(e) {
+      try {
+        // Prevent default action
+        e.preventDefault();
+        
+        console.log('Drop event triggered');
+        
+        // Get the target cell
+        const targetCell = e.target.closest('.grid-cell');
+        if (!targetCell) {
+          console.log('No target cell found in drop event');
+          return false;
+        }
+        
+        if (targetCell === dragSourceCell) {
+          console.log('Dropped on source cell, ignoring');
+          return false;
+        }
+        
+        // Get chart index
+        const dataTransfer = e.dataTransfer.getData('text/plain');
+        console.log('Data transfer content:', dataTransfer);
+        
+        const chartIndex = parseInt(dataTransfer);
+        if (isNaN(chartIndex)) {
+          console.error('Invalid chart index in drop event');
+          return false;
+        }
+        
+        // Get target position
+        const targetRow = parseInt(targetCell.dataset.row);
+        const targetCol = parseInt(targetCell.dataset.col);
+        
+        console.log(`Dropping chart ${chartIndex} to position ${targetRow},${targetCol}`);
+        
+        // Move the chart
+        moveChart(chartIndex, targetRow, targetCol);
+        
+        // Remove drag-over class from all cells
+        document.querySelectorAll('.grid-cell.drag-over').forEach(cell => {
+          cell.classList.remove('drag-over');
+        });
+        
+        return false;
+      } catch (error) {
+        console.error('Error in handleDrop:', error);
+        return false;
+      }
+    }
+    
+    // Handle drag end
+    function handleDragEnd(e) {
+      // Only handle chart panels
+      const chartPanel = e.target.closest('.chart-panel');
+      if (!chartPanel) return;
+      
+      // Remove dragging class
+      chartPanel.classList.remove('dragging');
+      
+      // Clear drag-over class from all cells
+      document.querySelectorAll('.grid-cell').forEach(cell => {
+        cell.classList.remove('drag-over');
+      });
+      
+      // Reset drag variables
+      draggedChart = null;
+      dragSourceCell = null;
+    }
+    
+    // Move a chart to a new position
+    async function moveChart(index, targetRow, targetCol) {
+      try {
+        console.log(`Moving chart at index ${index} to position ${targetRow},${targetCol}`);
+        
+        // Get charts for the current tab
+        const charts = config.tab_layouts[currentTab] || [];
+        
+        // Get the chart
+        const chart = charts[index];
+        if (!chart) {
+          console.error(`Chart not found at index ${index}`);
+          return;
+        }
+        
+        // Get the current position
+        const { row: sourceRow, col: sourceCol } = chart;
+        
+        // Check if there's already a chart at the target position
+        const targetChart = charts.find(c => c.row === targetRow && c.col === targetCol);
+        
+        if (targetChart) {
+          // Swap positions
+          targetChart.row = sourceRow;
+          targetChart.col = sourceCol;
+          
+          // Remove the BrowserView for the target chart
+          const targetId = `${currentTab}-${targetRow}-${targetCol}`;
+          await ipcRenderer.invoke('remove-chart-view', { id: targetId });
+        }
+        
+        // Update chart position
+        chart.row = targetRow;
+        chart.col = targetCol;
+        
+        // Save the configuration
+        saveConfig();
+        
+        // Re-render the grid
+        renderGrid();
+        
+        // Update BrowserViews
+        setTimeout(async () => {
+          await updateChartViewBounds();
+          
+          // Create a new BrowserView for the moved chart
+          const id = `${currentTab}-${targetRow}-${targetCol}`;
+          const { name, symbol, url } = chart;
+          const chartUrl = url || (symbol ? `https://www.google.com/finance/quote/${symbol}` : 'about:blank');
+          
+          // Calculate bounds for this chart
+          const bounds = calculateChartBounds(targetRow, targetCol);
+          
+          // Create the BrowserView
+          const result = await ipcRenderer.invoke('create-chart-view', {
+            id,
+            url: chartUrl,
+            bounds
+          });
+          
+          if (result.success) {
+            console.log(`BrowserView created successfully for moved chart ${name}`);
+          } else {
+            console.error(`Failed to create BrowserView for moved chart ${name}: ${result.error}`);
+          }
+          
+          // If we swapped with another chart, recreate its BrowserView too
+          if (targetChart) {
+            const swapId = `${currentTab}-${sourceRow}-${sourceCol}`;
+            const { name: swapName, symbol: swapSymbol, url: swapUrl } = targetChart;
+            const swapChartUrl = swapUrl || (swapSymbol ? `https://www.google.com/finance/quote/${swapSymbol}` : 'about:blank');
+            
+            // Calculate bounds for the swapped chart
+            const swapBounds = calculateChartBounds(sourceRow, sourceCol);
+            
+            // Create the BrowserView for the swapped chart
+            const swapResult = await ipcRenderer.invoke('create-chart-view', {
+              id: swapId,
+              url: swapChartUrl,
+              bounds: swapBounds
+            });
+            
+            if (swapResult.success) {
+              console.log(`BrowserView created successfully for swapped chart ${swapName}`);
+            } else {
+              console.error(`Failed to create BrowserView for swapped chart ${swapName}: ${swapResult.error}`);
+            }
+          }
+        }, 100);
+      } catch (error) {
+        console.error('Error moving chart:', error);
+      }
+    }
+    
+    // Switch between tabs
+    async function switchTab(tab) {
+      console.log(`Switching to tab: ${tab}`);
+      
+      try {
+        // Hide BrowserViews for the previous tab
+        await ipcRenderer.invoke('hide-chart-views', { tab: currentTab });
+        
+        // Update current tab
+        currentTab = tab;
+        
+        // Update UI
+        tabButtons.forEach(button => {
+          if (button.dataset.tab === tab) {
+            button.classList.add('active');
+          } else {
+            button.classList.remove('active');
+          }
+        });
+        
+        // Show/hide tab containers
+        // Hide all tab containers first
+        mainTabContainer.style.display = 'none';
+        secondaryTabContainer.style.display = 'none';
+        cryptoTabContainer.style.display = 'none';
+        
+        // Show the selected tab container
+        if (tab === MAIN_TAB) {
+          mainTabContainer.style.display = 'flex';
+        } else if (tab === SECONDARY_TAB) {
+          secondaryTabContainer.style.display = 'flex';
+        } else if (tab === CRYPTO_TAB) {
+          cryptoTabContainer.style.display = 'flex';
+        }
+        
+        // Re-render the grid for the current tab
+        renderGrid();
+        
+        // Create new chart views for this tab
+        // This is the key fix - we need to create new views when switching tabs
+        await createChartViews();
+        
+        console.log(`Successfully switched to tab: ${tab}`);
+      } catch (error) {
+        console.error(`Error switching to tab ${tab}:`, error);
+      }
+    }
+    
+    // Render the grid for the current tab
+    function renderGrid() {
+      try {
+        console.log(`Rendering grid for ${currentTab} tab`);
+        
+        // Get the appropriate container based on the current tab
+        let container;
+        if (currentTab === MAIN_TAB) {
+          container = mainTabContainer;
+        } else if (currentTab === SECONDARY_TAB) {
+          container = secondaryTabContainer;
+        } else if (currentTab === CRYPTO_TAB) {
+          container = cryptoTabContainer;
+        } else {
+          console.error(`Unknown tab: ${currentTab}`);
+          return;
+        }
+        
+        // Clear the container
+        container.innerHTML = '';
+        
+        // Get charts for the current tab
+        const charts = config.tab_layouts[currentTab] || [];
+        
+        // Check if there are any charts
+        if (charts.length === 0) {
+          // Show empty state
+          const emptyState = document.createElement('div');
+          emptyState.className = 'empty-state';
+          emptyState.innerHTML = `
+            <h2>No charts added yet</h2>
+            <p>Click the "Add Chart" button to add your first financial chart</p>
+          `;
+          container.appendChild(emptyState);
+          return;
+        }
+        
+        // Create a grid container to hold all rows
+        const gridContainer = document.createElement('div');
+        gridContainer.className = 'grid-container';
+        container.appendChild(gridContainer);
+        
+        // Calculate available height
+        const containerHeight = window.innerHeight - 44 - 40; // Window height - toolbar - padding
+        const rowMargin = 10;
+        const totalMarginSpace = rowMargin * (GRID_ROWS - 1);
+        const availableHeightForRows = containerHeight - totalMarginSpace;
+        const rowHeight = Math.floor(availableHeightForRows / GRID_ROWS);
+        
+        console.log(`Container height: ${containerHeight}px, Row height: ${rowHeight}px`);
+        
+        // Create a grid
+        for (let row = 0; row < GRID_ROWS; row++) {
+          const rowElement = document.createElement('div');
+          rowElement.className = 'grid-row';
+          
+          // Set explicit height in pixels
+          rowElement.style.height = `${rowHeight}px`;
+          rowElement.style.minHeight = '200px';
+          
+          for (let col = 0; col < GRID_COLS; col++) {
+            const cellElement = document.createElement('div');
+            cellElement.className = 'grid-cell';
+            cellElement.dataset.row = row;
+            cellElement.dataset.col = col;
+            
+            // Find a chart for this position
+            const chart = charts.find(c => c.row === row && c.col === col);
+            
+            if (chart) {
+              // Get the index of the chart
+              const index = charts.indexOf(chart);
+              
+              // Add the chart panel
+              cellElement.innerHTML = createChartPanel(chart, index);
+              
+              // Add event listeners for chart controls
+              const refreshButton = cellElement.querySelector('.refresh-button');
+              const editButton = cellElement.querySelector('.edit-button');
+              const removeButton = cellElement.querySelector('.remove-button');
+              
+              if (refreshButton) {
+                refreshButton.addEventListener('click', () => {
+                  refreshSingleChart(index);
+                });
+              }
+              
+              if (editButton) {
+                editButton.addEventListener('click', () => {
+                  showEditDialog(index);
+                });
+              }
+              
+              if (removeButton) {
+                removeButton.addEventListener('click', () => {
+                  removeChart(index);
+                });
+              }
+            } else {
+              // Add an empty cell
+              cellElement.innerHTML = '<div class="empty-cell">Empty</div>';
+            }
+            
+            rowElement.appendChild(cellElement);
+          }
+          
+          gridContainer.appendChild(rowElement);
+        }
+        
+        // Update chart view bounds after rendering
+        setTimeout(updateChartViewBounds, 100);
+        
+        console.log('Grid rendered with rows taking equal height');
+      } catch (error) {
+        console.error('Error rendering grid:', error);
+      }
+    }
+    
+    // Create a chart panel HTML
+    function createChartPanel(chart, index) {
+      const { name, symbol, url, row, col } = chart;
+      
+      return `
+        <div class="chart-panel" 
+          data-index="${index}" 
+          data-symbol="${symbol}" 
+          data-url="${url || ''}" 
+          data-row="${row}" 
+          data-col="${col}" 
+          draggable="true">
+          <div class="chart-header">
+            <h3 class="chart-title">${name}</h3>
+            <div class="chart-controls">
+              <button class="refresh-button" title="Refresh this chart">↻</button>
+              <button class="edit-button">Edit</button>
+              <button class="remove-button">Remove</button>
+            </div>
+          </div>
+          <div class="chart-content">
+            <div class="chart-placeholder">Chart content will appear here</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Create BrowserViews for all charts in the current tab
+    async function createChartViews() {
+      try {
+        console.log(`Creating chart views for ${currentTab} tab`);
+        
+        // First, remove any existing chart views for this tab
+        try {
+          // Hide any existing views for this tab
+          await ipcRenderer.invoke('hide-chart-views', { tab: currentTab });
+          
+          // Get charts for the current tab
+          const charts = config.tab_layouts[currentTab] || [];
+          
+          // Remove each existing chart view individually
+          for (const chart of charts) {
+            const { row, col } = chart;
+            const id = `${currentTab}-${row}-${col}`;
+            try {
+              await ipcRenderer.invoke('remove-chart-view', { id });
+              console.log(`Removed existing chart view ${id}`);
+            } catch (e) {
+              // It's okay if the view doesn't exist yet
+              console.log(`No existing view to remove for ${id}`);
+            }
+          }
+        } catch (error) {
+          console.log(`Error removing existing views: ${error.message}`);
+        }
+        
+        // Get charts for the current tab
+        const charts = config.tab_layouts[currentTab] || [];
+        
+        if (charts.length === 0) {
+          console.log('No charts to create views for');
+          return;
+        }
+        
+        // Short delay to ensure all views are properly removed
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Create a view for each chart
+        for (let i = 0; i < charts.length; i++) {
+          const chart = charts[i];
+          const { row, col, name, symbol, url } = chart;
+          
+          // Create a unique ID for this chart view
+          const id = `${currentTab}-${row}-${col}`;
+          
+          // Get the chart URL
+          const chartUrl = url || (symbol ? `https://www.google.com/finance/quote/${symbol}` : 'about:blank');
+          
+          // Add timestamp to force refresh (bypass cache)
+          const timestamp = Date.now();
+          const refreshedUrl = chartUrl.includes('?') 
+            ? `${chartUrl}&_t=${timestamp}` 
+            : `${chartUrl}?_t=${timestamp}`;
+          
+          // Calculate bounds for this chart
+          const bounds = calculateChartBounds(row, col);
+          
+          // Create the BrowserView
+          console.log(`Creating BrowserView for ${name} at position ${row},${col}`);
+          try {
+            const result = await ipcRenderer.invoke('create-chart-view', {
+              id,
+              url: refreshedUrl, // Use timestamped URL to force refresh
+              bounds
+            });
+            
+            if (result.success) {
+              console.log(`BrowserView created successfully for ${name}`);
+            } else {
+              console.error(`Failed to create BrowserView for ${name}: ${result.error}`);
+            }
+          } catch (err) {
+            console.error(`Error creating BrowserView for ${name}:`, err);
+          }
+        }
+        
+        chartViewsCreated = true;
+      } catch (error) {
+        console.error('Error creating chart views:', error);
+      }
+    }
+    
+    // Calculate bounds for a chart at the given row and column
+    function calculateChartBounds(row, col) {
+      try {
+        // Get the appropriate container based on the current tab
+        let container;
+        if (currentTab === MAIN_TAB) {
+          container = mainTabContainer;
+        } else if (currentTab === SECONDARY_TAB) {
+          container = secondaryTabContainer;
+        } else if (currentTab === CRYPTO_TAB) {
+          container = cryptoTabContainer;
+        } else {
+          console.error(`Unknown tab: ${currentTab}`);
+          return { x: 0, y: 0, width: 0, height: 0 };
+        }
+        
+        // Get all cells in the grid
+        const cells = container.querySelectorAll('.grid-cell');
+        
+        // Calculate the index of the cell in the grid
+        const cellIndex = (row * GRID_COLS) + col;
+        
+        // Get the cell element
+        const cell = cells[cellIndex];
+        
+        if (!cell) {
+          console.error(`Cell not found at position ${row},${col} in tab ${currentTab}`);
+          return { x: 0, y: 0, width: 0, height: 0 };
+        }
+        
+        // Get the chart content element
+        const chartContent = cell.querySelector('.chart-content');
+        
+        if (!chartContent) {
+          console.error(`Chart content not found at position ${row},${col} in tab ${currentTab}`);
+          return { x: 0, y: 0, width: 0, height: 0 };
+        }
+        
+        // Get the position of the chart content relative to the window
+        const rect = chartContent.getBoundingClientRect();
+        
+        // Calculate bounds
+        const bounds = {
+          x: Math.round(rect.left),
+          y: Math.round(rect.top),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height)
+        };
+        
+        console.log(`Calculated bounds for chart at ${row},${col} in tab ${currentTab}:`, bounds);
+        
+        return bounds;
+      } catch (error) {
+        console.error(`Error calculating bounds for chart at ${row},${col} in tab ${currentTab}:`, error);
+        return { x: 0, y: 0, width: 0, height: 0 };
+      }
+    }
+    
+    // Update bounds for all chart views
+    async function updateChartViewBounds() {
+      try {
+        if (!chartViewsCreated) {
+          return;
+        }
+        
+        console.log(`Updating chart view bounds for ${currentTab} tab`);
+        
+        // Get charts for the current tab
+        const charts = config.tab_layouts[currentTab] || [];
+        
+        if (charts.length === 0) {
+          return;
+        }
+        
+        // Update bounds for each chart
+        for (let i = 0; i < charts.length; i++) {
+          const chart = charts[i];
+          const { row, col } = chart;
+          
+          // Create a unique ID for this chart view
+          const id = `${currentTab}-${row}-${col}`;
+          
+          // Calculate new bounds for this chart
+          const bounds = calculateChartBounds(row, col);
+          
+          // Update the BrowserView bounds
+          const result = await ipcRenderer.invoke('update-chart-view', {
+            id,
+            bounds
+          });
+          
+          if (!result.success) {
+            console.error(`Failed to update bounds for chart at ${row},${col}: ${result.error}`);
+          }
+        }
+      } catch (error) {
+        console.error('Error updating chart view bounds:', error);
+      }
+    }
+    
+    // Add a new chart
+    async function addChart() {
+      try {
+        const name = document.getElementById('asset-name').value.trim();
+        // Symbol field has been removed
+        const symbol = ''; // Empty string since we're not using symbols anymore
+        const url = document.getElementById('asset-url').value.trim() || null;
+        
+        // Validate inputs
+        if (!name && !url) {
+          alert('Either asset name or URL is required');
+          return;
+        }
+        
+        console.log(`Adding chart: ${name} (${symbol})`);
+        
+        // Get charts for the current tab
+        const charts = config.tab_layouts[currentTab] || [];
+        
+        // Calculate position (first empty cell)
+        let row = 0;
+        let col = 0;
+        let found = false;
+        
+        // Create a 4x4 grid
+        const grid = Array(GRID_ROWS).fill(null).map(() => Array(GRID_COLS).fill(null));
+        
+        // Place existing charts in the grid
+        charts.forEach(chart => {
+          const { row: r, col: c } = chart;
+          if (r >= 0 && r < GRID_ROWS && c >= 0 && c < GRID_COLS) {
+            grid[r][c] = chart;
+          }
+        });
+        
+        // Find the first empty cell
+        for (let r = 0; r < GRID_ROWS; r++) {
+          for (let c = 0; c < GRID_COLS; c++) {
+            if (!grid[r][c]) {
+              row = r;
+              col = c;
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+        
+        // If no empty cell found, use the last cell
+        if (!found) {
+          row = GRID_ROWS - 1;
+          col = GRID_COLS - 1;
+        }
+        
+        // Create the chart
+        const chart = { name, symbol, url, row, col };
+        
+        // Add to the current tab
+        if (!config.tab_layouts[currentTab]) {
+          config.tab_layouts[currentTab] = [];
+        }
+        
+        config.tab_layouts[currentTab].push(chart);
+        
+        // Save the configuration
+        saveConfig();
+        
+        // Hide dialog and show all BrowserViews
+        addChartDialog.style.display = 'none';
+        addChartForm.reset();
+        await ipcRenderer.invoke('show-all-chart-views');
+        
+        // Re-render the grid
+        renderGrid();
+        
+        // Create a BrowserView for the new chart
+        const id = `${currentTab}-${row}-${col}`;
+        const chartUrl = url || (symbol ? `https://www.google.com/finance/quote/${symbol}` : 'about:blank');
+        
+        // Wait for the grid to render before calculating bounds
+        setTimeout(async () => {
+          // Calculate bounds for this chart
+          const bounds = calculateChartBounds(row, col);
+          
+          // Create the BrowserView
+          const result = await ipcRenderer.invoke('create-chart-view', {
+            id,
+            url: chartUrl,
+            bounds
+          });
+          
+          if (result.success) {
+            console.log(`BrowserView created successfully for ${name}`);
+          } else {
+            console.error(`Failed to create BrowserView for ${name}: ${result.error}`);
+          }
+        }, 100);
+      } catch (error) {
+        console.error('Error adding chart:', error);
+        alert(`Error adding chart: ${error.message}`);
+      }
+    }
+    
+    // Show the edit dialog for a chart
+    async function showEditDialog(index) {
+      try {
+        // Get the chart
+        const charts = config.tab_layouts[currentTab];
+        const chart = charts[index];
+        
+        if (!chart) {
+          console.error(`Chart not found at index ${index}`);
+          return;
+        }
+        
+        // Hide all BrowserViews when showing dialog
+        await ipcRenderer.invoke('hide-all-chart-views');
+        
+        // Populate form
+        document.getElementById('edit-chart-index').value = index;
+        document.getElementById('edit-asset-name').value = chart.name;
+        // Symbol field has been removed
+        document.getElementById('edit-asset-url').value = chart.url || '';
+        
+        // Show dialog
+        editChartDialog.style.display = 'flex';
+      } catch (error) {
+        console.error('Error showing edit dialog:', error);
+        // Make sure to show BrowserViews if there's an error
+        await ipcRenderer.invoke('show-all-chart-views');
+      }
+    }
+    
+    // Update an existing chart
+    async function updateChart() {
+      try {
+        const index = parseInt(document.getElementById('edit-chart-index').value);
+        const name = document.getElementById('edit-asset-name').value.trim();
+        // Symbol field has been removed
+        const symbol = ''; // Empty string since we're not using symbols anymore
+        const url = document.getElementById('edit-asset-url').value.trim() || null;
+        
+        // Validate inputs
+        if (!name && !url) {
+          alert('Either asset name or URL is required');
+          return;
+        }
+        
+        console.log(`Updating chart at index ${index}: ${name} (${symbol})`);
+        
+        // Get charts for the current tab
+        const charts = config.tab_layouts[currentTab] || [];
+        
+        // Find the chart by index
+        if (index >= 0 && index < charts.length) {
+          const chart = charts[index];
+          const { row, col } = chart;
+          
+          // Update chart properties
+          chart.name = name;
+          chart.symbol = symbol;
+          chart.url = url;
+          
+          // Save the configuration
+          saveConfig();
+          
+          // Close the dialog and reset the form
+          editChartDialog.style.display = 'none';
+          editChartForm.reset();
+          
+          // Re-render the grid
+          renderGrid();
+          
+          // Update the BrowserView
+          const id = `${currentTab}-${row}-${col}`;
+          const chartUrl = url || (symbol ? `https://www.google.com/finance/quote/${symbol}` : 'about:blank');
+          
+          // Wait for the grid to render before updating
+          setTimeout(async () => {
+            // Calculate bounds for this chart
+            const bounds = calculateChartBounds(row, col);
+            
+            // Update the BrowserView
+            const result = await ipcRenderer.invoke('update-chart-view', {
+              id,
+              url: chartUrl,
+              bounds
+            });
+            
+            if (result.success) {
+              console.log(`BrowserView updated successfully for ${name}`);
+            } else {
+              console.error(`Failed to update BrowserView for ${name}: ${result.error}`);
+            }
+          }, 100);
+        } else {
+          console.error(`Chart not found at index ${index}`);
+        }
+      } catch (error) {
+        console.error('Error updating chart:', error);
+        alert(`Error updating chart: ${error.message}`);
+      }
+    }
+    
+    // Remove a chart
+    async function removeChart(index) {
+      try {
+        console.log(`Removing chart at index ${index}`);
+        
+        // Confirm removal
+        if (!confirm('Are you sure you want to remove this chart?')) {
+          return;
+        }
+        
+        // Get the chart
+        const charts = config.tab_layouts[currentTab] || [];
+        const chart = charts[index];
+        
+        if (!chart) {
+          console.error(`Chart not found at index ${index}`);
+          return;
+        }
+        
+        // Get chart position
+        const { row, col } = chart;
+        
+        // Create a unique ID for this chart view
+        const id = `${currentTab}-${row}-${col}`;
+        
+        // Remove the BrowserView
+        const result = await ipcRenderer.invoke('remove-chart-view', { id });
+        
+        if (result.success) {
+          console.log(`BrowserView removed successfully for chart at index ${index}`);
+        } else {
+          console.error(`Failed to remove BrowserView for chart at index ${index}: ${result.error}`);
+        }
+        
+        // Remove the chart from the configuration
+        config.tab_layouts[currentTab].splice(index, 1);
+        
+        // Save the configuration
+        saveConfig();
+        
+        // Re-render the grid
+        renderGrid();
+      } catch (error) {
+        console.error('Error removing chart:', error);
+        alert(`Error removing chart: ${error.message}`);
+      }
+    }
+    
+    // Save the configuration
+    async function saveConfig() {
+      console.log('Saving configuration...');
+      
+      try {
+        const success = await ipcRenderer.invoke('save-config', config);
+        console.log('Configuration saved:', success);
+      } catch (error) {
+        console.error('Error saving configuration:', error);
+      }
+    }
+    
+    // Initialize the application when the DOM is loaded
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
