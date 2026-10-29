@@ -30,6 +30,9 @@ interface Config {
 // Main tab names
 const MAIN_TAB = 'Main Dashboard';
 const SECONDARY_TAB = 'Secondary Dashboard';
+const CRYPTO_TAB = 'Crypto';
+const URANIUM_TAB = 'Uranium';
+const QUANTUM_TAB = 'Quantum';
 
 const App: React.FC = () => {
   // State for configuration
@@ -38,12 +41,18 @@ const App: React.FC = () => {
     current_layout: 'Default Layout',
     tab_layouts: {
       [MAIN_TAB]: [],
-      [SECONDARY_TAB]: []
+      [SECONDARY_TAB]: [],
+      [CRYPTO_TAB]: [],
+      [URANIUM_TAB]: [],
+      [QUANTUM_TAB]: []
     }
   });
   
   // State for current tab
   const [currentTab, setCurrentTab] = useState<string>(MAIN_TAB);
+
+  // Always use these tabs
+  const forcedTabs = [MAIN_TAB, SECONDARY_TAB, CRYPTO_TAB, URANIUM_TAB, QUANTUM_TAB];
   
   // State for loading status
   const [loading, setLoading] = useState<boolean>(true);
@@ -52,46 +61,47 @@ const App: React.FC = () => {
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        console.log('Loading configuration...');
         const loadedConfig = await ipcRenderer.invoke('load-config');
-        console.log('Configuration loaded:', loadedConfig);
-        
-        // Ensure tab_layouts exists
-        if (!loadedConfig.tab_layouts) {
-          loadedConfig.tab_layouts = {
-            [MAIN_TAB]: [],
-            [SECONDARY_TAB]: []
-          };
-        }
-        
+        // Always ensure all forcedTabs exist in config
+        if (!loadedConfig.tab_layouts) loadedConfig.tab_layouts = {};
+        forcedTabs.forEach(tab => {
+          if (!loadedConfig.tab_layouts[tab]) {
+            loadedConfig.tab_layouts[tab] = [];
+          }
+        });
         setConfig(loadedConfig);
         setLoading(false);
       } catch (error) {
-        console.error('Error loading configuration:', error);
         setLoading(false);
       }
     };
-    
     loadConfig();
   }, []);
 
   // Save configuration when it changes
   useEffect(() => {
     if (!loading) {
-      console.log('Saving configuration...');
-      ipcRenderer.invoke('save-config', config)
-        .then(success => {
-          console.log('Configuration saved:', success);
-        })
-        .catch(error => {
-          console.error('Error saving configuration:', error);
-        });
+      ipcRenderer.invoke('save-config', config);
     }
   }, [config, loading]);
 
   // Handle tab change
   const handleTabChange = (tab: string) => {
     console.log(`Switching to tab: ${tab}`);
+    
+    // Create the tab in the config if it doesn't exist
+    if (config.tab_layouts && !config.tab_layouts[tab]) {
+      const updatedTabLayouts = {
+        ...config.tab_layouts,
+        [tab]: []
+      };
+      
+      setConfig({
+        ...config,
+        tab_layouts: updatedTabLayouts
+      });
+    }
+    
     setCurrentTab(tab);
   };
 
@@ -186,13 +196,14 @@ const App: React.FC = () => {
     ipcRenderer.invoke('create-new-window');
   };
 
+  // Always render forcedTabs
   return (
     <div className="app">
       <Toolbar 
         layouts={Object.keys(config.layouts)}
         currentLayout={config.current_layout}
         currentTab={currentTab}
-        tabs={[MAIN_TAB, SECONDARY_TAB]}
+        tabs={forcedTabs}
         onTabChange={handleTabChange}
         onAddChart={addChart}
         onCreateLayout={createNewLayout}

@@ -27,7 +27,7 @@ function createWindow() {
   });
 
   // Load the index.html of the app
-  mainWindow.loadFile(path.join(__dirname, '../index.html'));
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   // Open DevTools in development mode
   if (process.env.NODE_ENV === 'development') {
@@ -92,7 +92,10 @@ ipcMain.handle('load-config', async () => {
         current_layout: 'Default Layout',
         tab_layouts: {
           'Main Dashboard': [],
-          'Secondary Dashboard': []
+          'Secondary Dashboard': [],
+          'Crypto': [],
+          'Uranium': [],
+          'Quantum': []
         }
       };
     }

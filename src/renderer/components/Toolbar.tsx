@@ -109,22 +109,37 @@ const Toolbar: React.FC<ToolbarProps> = ({
     }
   };
 
+  // Hardcode the five tabs to always render
+  const renderTabs = () => {
+    const forcedTabs = [
+      'Main Dashboard',
+      'Secondary Dashboard',
+      'Crypto',
+      'Uranium',
+      'Quantum',
+    ];
+    return forcedTabs.map(tab => (
+      <button
+        key={tab}
+        className={`tab-button${currentTab === tab ? ' active' : ''}`}
+        onClick={() => onTabChange(tab)}
+      >
+        {tab}
+      </button>
+    ));
+  };
+
   return (
     <div className="toolbar">
       <div className="toolbar-section">
-        <h1>Market Dashboard</h1>
+        <h1>Market Dashboard (UPDATED)</h1>
       </div>
       
+      {/* Debug log the tabs that were passed in */}
+      {(() => { console.log('Toolbar received tabs:', tabs); return null; })()}
+      
       <div className="toolbar-section tabs">
-        {tabs.map(tab => (
-          <button
-            key={tab}
-            className={`tab-button ${currentTab === tab ? 'active' : ''}`}
-            onClick={() => onTabChange(tab)}
-          >
-            {tab}
-          </button>
-        ))}
+        {renderTabs()}
       </div>
       
       <div className="toolbar-section actions">
